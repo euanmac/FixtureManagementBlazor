@@ -1,0 +1,146 @@
+﻿@page "/counter"
+@using System.Text.Json
+@using System.Text.Json.Serialization
+@inject IHttpClientFactory ClientFactory
+
+<PageTitle>Counter</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Counter</MudText>
+
+<MudText Typo="Typo.body1" Class="mb-4">Current count: @currentCount</MudText>
+
+<MudButton Color="Color.Primary" Variant="Variant.Filled" @onclick="IncrementCount">Click me</MudButton>
+
+<MudPaper Class="pa-4">
+    <MudDataGrid @ref="dataGrid2"
+                 Items="@Elements"
+                 Filterable="true"
+                 FilterMode="DataGridFilterMode.Simple">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6">Periodic Elements - Example #2</MudText>
+            <MudSpacer/>
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="x => x.Number" Title="Nr"/>
+            <PropertyColumn Property="x => x.Sign"/>
+            <PropertyColumn Property="x => x.Name"/>
+            <PropertyColumn Property="x => x.Position"/>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="Element"/>
+        </PagerContent>
+    </MudDataGrid>
+
+    <MudPaper Class="pt-4 mt-1 gap-x-2 d-flex" Elevation="0">
+        <MudButton Variant="Variant.Filled" OnClick="ClearFilters">Clear filters</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="AddFilters">Add filters</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="ChangeFilters">Change Filter</MudButton>
+        <MudButton Variant="Variant.Filled" OnClick="OpenFilters">Open filters</MudButton>
+
+    </MudPaper>
+</MudPaper>
+
+@code {
+    private int currentCount = 0;
+
+    private void IncrementCount()
+    {
+        currentCount++;
+    }
+    public const string ColumnName = "Name";
+    IEnumerable<Element> Elements = new List<Element>() {
+            new Element { Electrons= new List<int> { 0, 1, 2}, Group = "", Position=0, Molar=1.1, Name="test", Number=55, Sign="T"}
+        };
+
+    MudDataGrid<Element> dataGrid2;
+
+    protected override async Task OnInitializedAsync()
+    {
+        @* Elements = await ClientFactory.CreateClient().GetFromJsonAsync<List<Element>>("https://try.mudblazor.com/webapi/periodictable"); *@
+        Elements = new List<Element>() {
+            new Element { Electrons= new List<int> { 0, 1, 2}, Group = "", Position=0, Molar=1.1, Name="txst", Number=55, Sign="T"}
+        };
+
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+
+        if (firstRender)
+        {
+
+            
+            dataGrid2.FilterDefinitions.Add(new FilterDefinition<Element>()
+            {
+                Id = Guid.NewGuid(),
+                Column = dataGrid2.RenderedColumns.First(c => c.Title == ColumnName),
+                Operator = "contains",
+                Title = ColumnName,
+                Value = "e"
+            });
+            StateHasChanged();
+        }
+    }
+
+    private void ClearFilters()
+    {
+        dataGrid2.FilterDefinitions.Clear();
+    }
+
+    private void AddFilters()
+    {
+        var customFilter = new FilterDefinition<Element>()
+        {
+            Id = Guid.NewGuid(),
+            Column = dataGrid2.RenderedColumns.First(c => c.Title == ColumnName),
+            Operator = "contains",
+            Title = ColumnName,
+            Value = "e"
+        };
+
+        dataGrid2.FilterDefinitions.Add(customFilter);
+    }
+
+    private void OpenFilters()
+    {
+        dataGrid2.OpenFilters();
+    }
+
+    private void ChangeFilters()
+    {
+        var first = true;
+        var value = "";
+
+        foreach (var def in dataGrid2.FilterDefinitions.Where(f => f.Title == ColumnName))
+        {
+            if (first)
+            {
+                value = def.Value.Equals("e") ? "m" : "e";
+                first = false;
+            }
+
+            def.Operator = "contains";
+            def.Value = value;
+        }
+    }
+
+    public class Element
+    {
+        public string Group { get; set; }
+        public int Position { get; set; }
+        public string Name { get; set; }
+        public int Number { get; set; }
+
+        [JsonPropertyName("small")]
+        public string Sign { get; set; }
+        public double Molar { get; set; }
+        public IList<int> Electrons { get; set; }
+
+        public override string ToString()
+        {
+            return $"{Sign} - {Name}";
+        }
+    }
+}

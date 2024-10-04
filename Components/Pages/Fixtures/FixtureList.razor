@@ -1,0 +1,173 @@
+@page "/fixtures"
+@attribute [StreamRendering]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ApplicationDbContext MyDbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using FixtureManagementBlazor.Models
+@using FixtureManagementBlazor.ViewModels
+@using MudBlazor
+
+<PageTitle>Fixtures</PageTitle>
+
+@if (Fixtures == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    @* <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Team</th>
+                <th>Opponent</th>
+                <th>Home</th>
+            </tr>
+        </thead>
+        <tbody> 
+            @foreach (var fixture in Fixture)
+            {
+                <tr>
+                    <td>@fixture.Date.ToShortDateString()</td>
+                    <td>@fixture.Team!.Name</td>
+                    <td>@fixture.Opponent</td>
+                    <td>@fixture.IsHome</td>
+                </tr>
+            }
+        </tbody>
+    </table> *@
+    @* <MudPaper class="pa-4"> *@
+        @* <MudFab StartIcon="@Icons.Material.Filled.Add" Label="Create Fixture" Size="Size.Small" class="ma-4" onclick=""/> *@
+        @* <MudButton Variant="Variant.Filled" class="ma-4" DropShadow="true" Ripple="false">Create Fixture</MudButton> *@
+
+    @* </MudPaper> *@
+
+    
+    <MudStack Row="true" class="pa-4" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+        <MudChipSet T="string" SelectionMode="SelectionMode.MultiSelection" CheckMark="true" Variant="Variant.Text">
+                <MudChip Value="@("Home")" @bind-Selected="filterIncludeHome" Color="Color.Dark"/>
+                <MudChip Value="@("Away")" @bind-Selected="filterIncludeAway" Color="Color.Primary"/>
+        </MudChipSet>
+        @* <MudTextField Format="yyyy-MM-dd" T="DateTime?" Label="Start Date"  InputType="InputType.Date" @bind-Value="startDate" Variant="Variant.Outlined" Margin="Margin.Dense" style="@filterStyleOverride" />
+        <MudTextField Format="yyyy-MM-dd" T="DateTime?" Label="End Date"  InputType="InputType.Date" @bind-Value="endDate" Variant="Variant.Outlined" Margin="Margin.Dense" style="@filterStyleOverride" /> *@
+        <MudDatePicker Label="Start Date" @bind-Date="startDate" style="@filterStyleOverride" Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense"/>
+        <MudDatePicker Label="End Date" @bind-Date="endDate" style="@filterStyleOverride"  Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense"/>
+        <MudTextField @bind-Value="_searchString" Label="Search" Adornment="Adornment.Start" Variant="Variant.Outlined" Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Margin="Margin.Dense"></MudTextField> 
+        <MudSpacer/>
+        
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="false" hidden="@(!isAuthenticated)" Size="Size.Small" Class="" Href="../fixtures/create" Color="Color.Primary"/>
+        <MudFab StartIcon="@Icons.Material.Filled.Download" DropShadow="false" Size="Size.Small" Color="Color.Primary"/>
+        
+    </MudStack>         
+    <MudDataGrid    T="FixtureView" 
+                    ReadOnly="false" 
+                    @ref="fixtureGrid" 
+                    Items="@Fixtures" 
+                    Dense="true" Filterable="true" 
+                    Striped="true" EditMode="DataGridEditMode.Form" 
+                    Virtualize="true" FixedHeader="true" Height="700px"
+                    QuickFilter="@_quickFilter"
+                    EditTrigger="DataGridEditTrigger.Manual" StartedEditingItem="@StartedEditingItem" CanceledEditingItem="@CanceledEditingItem" CommittedItemChanges="@CommittedItemChanges" RowClass="pt-0 pb-0"> 
+         <Columns >
+            <PropertyColumn Property="@(f => f.Date)" Sortable="true" Format="dd/MM/yyyy" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <PropertyColumn Property="@(f => f.Team!.DisplayName)" Title="Team" Sortable="true" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0">
+
+            </PropertyColumn>
+            <PropertyColumn Property="@(f => (f.IsHome ? "H" : "A"))" Title="H/A" Sortable="false" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <PropertyColumn Property="@(f => f.Opponent)" Title="Opponent" Sortable="true"  CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <PropertyColumn Property="@(f => f.FixtureType.FixtureTypeShortName())" Title="Type" Align="Align.Left" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0" Sortable="false"/>
+            <PropertyColumn Property="@(f => (f.IsAllocated ? f.FixtureAllocation!.Pitch.Name : String.Empty))" Sortable="false" Title="Pitch" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <PropertyColumn Property="@(f => (f.IsAllocated ? f.FixtureAllocation!.Start.ToString("HH:mm") : String.Empty))" Sortable="false" Title="Start" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <TemplateColumn Hidden="@(!isAuthenticated)" CellClass="pt-0 pb-0"> 
+                <CellTemplate>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Href="@($"/fixture/edit/{context.Item.Id}")"/>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Href="@($"/fixture/delete/{context.Item.Id}")"/>
+                </CellTemplate>
+            </TemplateColumn> 
+        </Columns>
+    </MudDataGrid>
+
+}
+
+@code {
+    MudDataGrid<FixtureView>? fixtureGrid;
+    private string rowStyleOverride = "font-size: .8rem; font-weight: 500";
+    private string filterStyleOverride = "font-size:0.9rem;";
+    
+    private bool filterIncludeHome = true;
+    private bool filterIncludeAway = false;
+
+    private IQueryable<FixtureView> fixture = Enumerable.Empty<FixtureView>().AsQueryable(); 
+    private DateTime? startDate = DateTime.Now.Date;
+    private DateTime? endDate = DateTime.Now.AddDays(14);
+    private bool isAuthenticated = false;
+    private string _searchString = "";
+    IQueryable<Fixture> Fixtures
+    {
+        get
+        {
+            var result = fixture
+                .Where(f => (f.Date >= DateOnly.FromDateTime((startDate ?? DateTime.Now)) && (f.Date <= DateOnly.FromDateTime(endDate ?? DateTime.MaxValue))));
+            result = result.Where(f => ((f.IsHome && filterIncludeHome) || (!f.IsHome && filterIncludeAway)));
+
+            return result;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        using var context = DbFactory.CreateDbContext();
+        
+        fixture = (await context.Fixture
+                .Include(f => f.Team)
+                .Include(f => f.FixtureAllocation)
+                    .ThenInclude(fa => fa!.Pitch)
+                .OrderBy(f => f.Date)
+                    .ThenBy(f => f.Team!.AgeGroup)
+                .ToListAsync()).AsQueryable();
+
+        //Check whether authenticated
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = (user.Identity is not null && user.Identity.IsAuthenticated);
+
+    }
+
+    Converter<DateOnly> converter = new Converter<DateOnly>
+    {
+        SetFunc = value => value.ToString("dd/MM/YYYY"),
+        GetFunc = text => DateOnly.Parse(text!),
+    };
+
+    private Func<Fixture, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Opponent.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.Team.Contains (_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+    void StartedEditingItem(Fixture item)
+    {
+        Console.WriteLine($"Event = StartedEditingItem, Data = {System.Text.Json.JsonSerializer.Serialize(item)}");
+    }
+
+    void CanceledEditingItem(Fixture item)
+    {
+        Console.WriteLine($"Event = CanceledEditingItem, Data = {System.Text.Json.JsonSerializer.Serialize(item)}");
+    }
+
+    void CommittedItemChanges(Fixture item)
+    {
+        Console.WriteLine($"Event = CommittedItemChanges, Data = {System.Text.Json.JsonSerializer.Serialize(item)}");
+    }
+
+
+}
