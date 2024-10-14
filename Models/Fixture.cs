@@ -25,7 +25,7 @@ namespace FixtureManagementBlazor.Models
         [Key]
         public Guid Id { get; set; }
         [Required (ErrorMessage = "Team is required")]
-        [CustomAttributeNoGuidEmpty(ErrorMessage = "Team is required 222")]
+        [CustomAttributeNoGuidEmpty(ErrorMessage = "Team is required")]
         public Guid TeamId { get; set; }
         [DataType(DataType.Date)]
         public DateOnly Date { get; set; }

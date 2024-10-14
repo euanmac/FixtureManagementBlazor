@@ -52,7 +52,7 @@ namespace FixtureManagementBlazor.Models
             this.Title = $"{fixture.Team!.DisplayName} v {fixture.Opponent}";
             this.Start = fixture.FixtureAllocation!.Start;
             this.End = fixture.FixtureAllocation.End;
-            this.ResourceId = fixture.FixtureAllocation!.PitchId!.Value;
+            this.ResourceId = fixture.FixtureAllocation!.PitchId;
             this.RGBColor = fixture.Team.ColourRGB;
             this.isConfirmed = fixture.FixtureAllocation.IsConfirmed;
             this.StartEditable = Editable;

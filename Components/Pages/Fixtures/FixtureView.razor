@@ -12,75 +12,63 @@
 
 <MudText Class="mb-4" Typo="Typo.h5">Fixture | @(action)</MudText>
 
-@* <hr />
-<div class="row">
-    <div class="col-md-4"> *@
+<EditForm method="post" Model="Fixture" OnValidSubmit="UpdateFixture" FormName="create" Enhance>
+    <DataAnnotationsValidator />
+    <MudCard Style="max-width:400">
+        <MudCardContent>      
+            <MudStack Justify="Justify.FlexStart" AlignItems="AlignItems.Stretch" Spacing="5">
+                @* <label for="date" class="form-label">Team:</label>  *@
+                <MudSelect Label="Team" @bind-Value="Fixture!.TeamId" Strict="true" For="() => Fixture!.TeamId">
+                    @* <option value="">Select Team</option> *@
+                    @foreach (var team in teamList)
+                    {
+                        <MudSelectItem Value="@team.Id">@team.DisplayName</MudSelectItem>
+                    }
+                </MudSelect> 
+                <ValidationMessage For="() => Fixture.Team" /> 
+                <MudTextField @bind-Value="Fixture.Opponent" For="() => Fixture.Opponent" Label="Opponent"/>  
+                <MudDatePicker Label="Date"  @bind-Date="FixtureDate" Class=""/>             
+                <MudSelect @bind-Value="Fixture.FixtureType" Label="Fixture Type">
+                        @foreach (FixtureType ftype in Enum.GetValues(typeof(FixtureType)))
+                        {
+                            <MudSelectItem Value="@ftype">@ftype</MudSelectItem>
+                        }
+                </MudSelect>
+                @* <MudCheckBox @bind-Value="Fixture.IsHome" Label="Is Home"/>   *@
+                <MudSwitch @bind-Value="Fixture.IsHome" Label="Home" Color="Color.Primary"/>  
 
-        <EditForm method="post" Model="Fixture" OnValidSubmit="UpdateFixture" FormName="create" Enhance>
-            <DataAnnotationsValidator />
-            <MudCard Style="max-width:400">
-                <MudCardContent>      
-                    <MudStack Justify="Justify.FlexStart" AlignItems="AlignItems.Stretch" Spacing="5">
-                        @* <label for="date" class="form-label">Team:</label>  *@
-                        <MudSelect Label="Team" @bind-Value="Fixture!.TeamId" Strict="true" For="() => Fixture.TeamId">
-                            @* <option value="">Select Team</option> *@
-                            @foreach (var team in teamList)
-                            {
-                                <MudSelectItem Value="@team.Id">@team.DisplayName</MudSelectItem>
-                            }
-                        </MudSelect> 
-                        <ValidationMessage For="() => Fixture.Team" /> 
-                        <MudTextField @bind-Value="Fixture.Opponent" For="() => Fixture.Opponent" Label="Opponent"/>  
-                        <MudDatePicker Label="Date"  @bind-Date="FixtureDate" @bind-Value="startDate" Class=""/>             
-                        <MudSelect @bind-Value="Fixture.FixtureType" Label="Fixture Type">
-                                @foreach (FixtureType ftype in Enum.GetValues(typeof(FixtureType)))
-                                {
-                                    <MudSelectItem Value="@ftype">@ftype</MudSelectItem>
-                                }
-                        </MudSelect>
-                        @* <MudCheckBox @bind-Value="Fixture.IsHome" Label="Is Home"/>   *@
-                        <MudSwitch @bind-Value="Fixture.IsHome" Label="Home" Color="Color.Primary"/>  
-
-                        @* <div class="mb-3">
-                            <label for="ishome" class="form-label">IsHome:</label> 
-                            <InputCheckbox id="ishome" @bind-Value="Fixture.IsHome" class="form-check-input" /> 
-                            <ValidationMessage For="() => Fixture.IsHome" class="text-danger" /> 
-                        </div>        
-                        <div class="mb-3">
-                            <label for="opponent" class="form-label">Opponent:</label> 
-                            <InputText id="opponent" @bind-Value="Fixture.Opponent" class="form-control" /> 
-                            <ValidationMessage For="() => Fixture.Opponent" class="text-danger" /> 
-                        </div>        
-                        <div class="mb-3">
-                            <label for="fixturetype" class="form-label">FixtureType:</label> 
-                            <InputSelect id="fixturetype" @bind-Value="Fixture.FixtureType" class="form-control">
-                                @foreach (var ftype in Enum.GetValues(typeof(FixtureType)))
-                                {
-                                    <MudSelectItem Value="@ftype">@ftype</MudSelectItem>
-                                }
-                            </InputSelect>
-                            
-                            <ValidationMessage For="() => Fixture.FixtureType" class="text-danger" /> 
-                        </div> *@
-                    </MudStack>
-                </MudCardContent>
-            </MudCard>
-            <MudButton Href="/fixtures" Variant="Variant.Filled" Color="Color.Default" Class="mt-4 mr-2">Cancel</MudButton>
-            @if (action == ComponentAction.Delete) {
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Error" Class="mt-4 mr-2">Delete</MudButton>
-            } else {
-                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4 mr-2">Save</MudButton>
-            }
-            
-        </EditForm>
-    @* </div>
-</div> *@
-<div>
-
-</div>
-
-
-
+                @* <div class="mb-3">
+                    <label for="ishome" class="form-label">IsHome:</label> 
+                    <InputCheckbox id="ishome" @bind-Value="Fixture.IsHome" class="form-check-input" /> 
+                    <ValidationMessage For="() => Fixture.IsHome" class="text-danger" /> 
+                </div>        
+                <div class="mb-3">
+                    <label for="opponent" class="form-label">Opponent:</label> 
+                    <InputText id="opponent" @bind-Value="Fixture.Opponent" class="form-control" /> 
+                    <ValidationMessage For="() => Fixture.Opponent" class="text-danger" /> 
+                </div>        
+                <div class="mb-3">
+                    <label for="fixturetype" class="form-label">FixtureType:</label> 
+                    <InputSelect id="fixturetype" @bind-Value="Fixture.FixtureType" class="form-control">
+                        @foreach (var ftype in Enum.GetValues(typeof(FixtureType)))
+                        {
+                            <MudSelectItem Value="@ftype">@ftype</MudSelectItem>
+                        }
+                    </InputSelect>
+                    
+                    <ValidationMessage For="() => Fixture.FixtureType" class="text-danger" /> 
+                </div> *@
+            </MudStack>
+        </MudCardContent>
+    </MudCard>
+    <MudButton Href="/fixtures" Variant="Variant.Filled" Color="Color.Default" Class="mt-4 mr-2">Cancel</MudButton>
+    @if (action == ComponentAction.Delete) {
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Error" Class="mt-4 mr-2">Delete</MudButton>
+    } else {
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4 mr-2">Save</MudButton>
+    }
+    
+</EditForm>
 
 @code {
 
@@ -97,7 +85,7 @@
 
     private Guid? FixtureTeamId {
         get {
-            return Fixture.Team == null ? null : Fixture!.Team.Id;
+            return Fixture!.Team == null ? null : Fixture!.Team.Id;
         }
         set {
             if (Fixture != null) {
@@ -107,7 +95,6 @@
         }
     } 
 
-    private DateTime? startDate = DateTime.Now.Date;
     private DateTime? FixtureDate {
         get {
             return Fixture!.Date.ToDateTime(TimeOnly.MinValue);
@@ -149,7 +136,7 @@
             NavigationManager.NavigateTo("notfound");
         }
 
-        using var context = DbFactory.CreateDbContext();
+        using var context = DbFactory   .CreateDbContext();
 
         //Create new fixture for create actions otherwise find
         if (action == ComponentAction.Create) 

@@ -8,7 +8,10 @@ namespace FixtureManagementBlazor.Models
     {
         public Guid Id { get; set; }
         public Guid FixtureId { get; set; }
-        public Guid? PitchId { get; set; }
+        
+        [Required (ErrorMessage = "Pitch is required")]
+        [CustomAttributeNoGuidEmpty(ErrorMessage = "Pitch is required")]
+        public Guid PitchId { get; set; }
       
         [Required]
         public DateTime Start { get; set; }
@@ -31,7 +34,7 @@ namespace FixtureManagementBlazor.Models
         {
             get
             {
-                return (PitchId != null && Duration != TimeSpan.Zero);
+                return (PitchId != Guid.Empty && Duration != TimeSpan.Zero);
             }
         }
 

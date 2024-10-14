@@ -1,0 +1,200 @@
+﻿@page "/fixtureallocation/{FixtureId:guid}"
+
+@inject FixtureManagementBlazor.Data.ApplicationDbContext DB
+@inject IDbContextFactory<FixtureManagementBlazor.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@using FixtureManagementBlazor.Models
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+
+@attribute [Authorize]
+
+<MudText Class="mb-4" Typo="Typo.h5">Allocation | @(action)</MudText>
+<EditForm method="post" Model="FixtureAllocation" OnValidSubmit="UpdateFixture" FormName="create" Enhance>
+    <DataAnnotationsValidator />
+    <MudCard Style="max-width:600">
+        <MudCardContent>      
+            <MudStack Justify="Justify.FlexStart" AlignItems="AlignItems.Stretch" Spacing="5">
+                <MudText>@($"{Fixture!.Team!.DisplayName} v {@Fixture!.Opponent}")</MudText>
+                <MudTextField Label="Start" InputType="InputType.Time" @bind-Value="FixtureStartTime" Format="HH:mm"></MudTextField>
+                <MudSelect Label="Duration" @bind-Value="FixtureAllocation!.Duration" Strict="true" For="() => FixtureAllocation!.Duration">
+                    @foreach (var ts in durations)
+                    {
+                        <MudSelectItem Value="@ts">@ts.TotalMinutes.ToString()</MudSelectItem>
+                    }
+                </MudSelect>
+                <MudSelect Label="Pitch" @bind-Value="FixtureAllocation!.PitchId" Strict="true" For="() => FixtureAllocation.PitchId">
+                    @foreach (var pitch in pitchList)
+                    {
+                        <MudSelectItem Value="@pitch.Id">@pitch.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudStack>
+        </MudCardContent>
+    </MudCard>
+    <MudButton Href="/fixtures" Variant="Variant.Filled" Color="Color.Default" Class="mt-4 mr-2">Cancel</MudButton>
+    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4 mr-2">Save</MudButton>
+    @if (action == ComponentAction.Edit) {
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" OnClick="@(()=> action = ComponentAction.Delete)" Color="Color.Error" Class="mt-4 mr-2">Delete</MudButton>
+    }
+
+</EditForm>
+
+@code {
+
+    public Fixture? Fixture { get; set; } 
+    private DateTime startTime = DateTime.Now;
+    [SupplyParameterFromForm]
+    public FixtureAllocation FixtureAllocation { get; set; } 
+
+    [Parameter]
+    public Guid? FixtureId {get; set;}  
+
+    private ComponentAction action;
+
+    private IQueryable<Pitch> pitchList = Enumerable.Empty<Pitch>().AsQueryable();
+    
+    private TimeSpan[] durations = [new TimeSpan(0,60,0), new TimeSpan(0,75,0), new TimeSpan(0,90,0), new TimeSpan(0,105,0), new TimeSpan(0,120,0)];
+
+    protected override async Task OnInitializedAsync()
+    {
+        using var context = DbFactory.CreateDbContext();
+        
+        //Ensure fixture exists
+        Fixture = await context.Fixture
+                .Include(f => f.Team)
+                .Include(f => f.FixtureAllocation)
+                .ThenInclude(fa => fa!.Pitch)
+                .FirstAsync(m => m.Id == FixtureId);          
+        
+        if (Fixture == null) {
+            NavigationManager.NavigateTo("notfound");
+            return;
+        }
+
+        //Default to edit unless no allocation already in which case it's create
+        action = ComponentAction.Edit;
+        if (!Fixture.IsAllocated) {
+            action = ComponentAction.Create;
+            FixtureAllocation = new FixtureAllocation() {FixtureId = Fixture!.Id, Duration=TimeSpan.FromMinutes(90), IsConfirmed=false, Start=Fixture.Date.ToDateTime(new TimeOnly(09,30,00))};
+        }  else 
+        {
+            FixtureAllocation = Fixture!.FixtureAllocation!;
+        }
+
+        pitchList = (await context.Pitch
+            .ToListAsync())
+            .OrderBy(p => p.DisplayOrder)
+            .AsQueryable();
+    }
+
+    private String FixtureStartTime {
+        get {
+            return FixtureAllocation!.Start.ToString("HH:mm");
+        }
+        set {
+            TimeOnly t = TimeOnly.Parse(value);
+            FixtureAllocation!.Start = Fixture!.Date.ToDateTime(t);
+        }
+    }
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task UpdateFixture()
+    {   
+        switch (action) 
+        {
+            case ComponentAction.Create:
+                await AddFixtureAllocation();
+                break;
+            case ComponentAction.Edit:
+                await EditFixtureAllocation();
+                break;
+            case ComponentAction.Delete:
+                await DeleteFixtureAllocation();
+                break;
+            case ComponentAction.Read:
+                break;
+        }
+        NavigationManager.NavigateTo("/fixtures");
+    }
+
+    private async Task AddFixtureAllocation() {
+        using var context = DbFactory.CreateDbContext();
+        //Remove reference link otherwise it doesnt save properly   
+        context.Add(FixtureAllocation!);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!FixtureExists(Fixture!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task EditFixtureAllocation() {
+        using var context = DbFactory.CreateDbContext();
+        try
+        {   
+            //Remove reference link otherwise it doesnt save properly   
+            FixtureAllocation!.Pitch = null;
+            context.Update(FixtureAllocation!);
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!FixtureExists(Fixture!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task DeleteFixtureAllocation() {
+
+
+        using var context = DbFactory.CreateDbContext();
+        FixtureAllocation fa = Fixture!.FixtureAllocation!;
+        //Remove reference link as it may try and delete team as well
+        //Fixture!.Team = null;
+        context.Remove(fa);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!FixtureExists(Fixture!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+        NavigationManager.NavigateTo("/fixtures");
+    }
+
+    private bool FixtureExists(Guid id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Fixture.Any(e => e.Id == id);
+    }
+
+    enum ComponentAction {
+        Create, Read, Edit, Delete
+    }
+
+}
