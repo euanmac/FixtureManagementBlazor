@@ -29,6 +29,7 @@
                         <MudSelectItem Value="@pitch.Id">@pitch.Name</MudSelectItem>
                     }
                 </MudSelect>
+                <MudSwitch @bind-Value="FixtureAllocation.IsConfirmed" Label="Confirmed" Color="Color.Primary"/>
             </MudStack>
         </MudCardContent>
     </MudCard>
@@ -43,9 +44,11 @@
 @code {
 
     public Fixture? Fixture { get; set; } 
-    private DateTime startTime = DateTime.Now;
+
     [SupplyParameterFromForm]
-    public FixtureAllocation FixtureAllocation { get; set; } 
+    //This is important - wtthout a component reference to the object then it is set to null when removed from the DBContext
+    //This page will rereder after a submit and this may be null
+    public FixtureAllocation? FixtureAllocation { get; set; } 
 
     [Parameter]
     public Guid? FixtureId {get; set;}  

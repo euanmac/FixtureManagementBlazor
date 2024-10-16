@@ -15,7 +15,7 @@
         public string Type {get; set;} = "";
         public bool IsAllocated = false;
 
-        public FixtureViewModel(Fixture fixture) {
+        public FixtureViewModel(Fixture fixture, bool IsAuthenticated) {
             this.Id = fixture.Id;
             this.Team = fixture.Team!.DisplayName;
             this.TeamId = fixture.TeamId;
@@ -23,7 +23,7 @@
             this.IsHome = fixture.IsHome;
             this.Type = fixture.FixtureType.FixtureTypeShortName();
             this.Date = fixture.Date;
-            if (fixture.IsAllocated) 
+            if (fixture.IsAllocated && (fixture.FixtureAllocation!.IsConfirmed || IsAuthenticated)) 
             {
                 this.IsAllocated = true;
                 this.Pitch = fixture.FixtureAllocation!.Pitch!.Name;

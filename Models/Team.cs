@@ -7,6 +7,8 @@ using System.Linq;
 
 namespace FixtureManagementBlazor.Models
 {
+
+
     public class Team
     {
         public Guid Id { get; set; }
@@ -61,94 +63,6 @@ namespace FixtureManagementBlazor.Models
             }
         }
 
-        // public IList<TeamReconiliationRow> Reconcile(DateOnly start, DateOnly end)
-        // {
-
-        //     //Download fixtures if team is on fulltime, filter so only within start and end date
-        //     List<DownloadFixture> downloadFixtures = !this.IsOnFullTime ? new List<DownloadFixture>() :
-        //         FixtureDownloader.FromFullTime(this) 
-        //         .Where(f => (DateOnly.FromDateTime(f.Date) >= start && DateOnly.FromDateTime(f.Date) <= end))
-        //         .ToList();
-
-        //     //Get list of DB fixtures for date range
-        //     List<Fixture> fixtures = this.Fixtures
-        //         .Where(f => (DateOnly.FromDateTime(f.Date) >= start && DateOnly.FromDateTime(f.Date) <= end))
-        //         .ToList();
-
- 
-        //     //If no local or fulltime fixtures then return rec row
-        //     //Check for rows, if none, create empty row for team to represent no fixture
-        //     if (downloadFixtures.Count == 0 && fixtures.Count == 0)
-        //     {
-        //         int offset = this.MatchDay == DayOfWeek.Sunday ? 6 : (int)this.MatchDay - 1;
-        //         return new List<TeamReconiliationRow> { new TeamReconiliationRow { Team = this, MatchDate = start.AddDays(offset), RecStatus = FixtureRecMatchType.noFixture } };
-        //     }
-
-        //     //Find fixtures for dates
-        //     //If fixtures exists then try to match
-        //     IList<TeamReconiliationRow> recRows = fixtures.Select(f =>
-        //         {
-        //             //Default row for local fixture
-        //             TeamReconiliationRow recRow = new TeamReconiliationRow {
-        //                 Team = this,
-        //                 Id = f.Id,
-        //                 MatchDate = DateOnly.FromDateTime(f.Date),
-        //                 Opponent = f.Opponent,
-        //                 Venue = (f.IsHome ? "H" : "A"),
-        //                 FixtureType = f.FixtureType,
-        //                 CanAllocate = f.CanAllocate,
-        //                 IsAllocated = f.IsAllocated,
-        //                 AllocationId = f.IsAllocated ? f.FixtureAllocation!.Id : Guid.Empty,
-        //                 Pitch = f.IsAllocated ? f.FixtureAllocation!.Pitch!.Name : "",
-        //                 Start = f.IsAllocated ? TimeOnly.FromDateTime(f.FixtureAllocation!.Start) : TimeOnly.MinValue,
-        //                 IsConfirmed = f.IsAllocated ? f.FixtureAllocation!.IsConfirmed : false
- 
-        //             };
-
-        //             //Check for downloaded fixture that matches
-        //             DownloadFixture? downloaded = downloadFixtures.FirstOrDefault(df =>
-        //                 f.Date == df.Date &&
-        //                 f.Opponent == df.Opponent &&
-        //                 f.IsHome == df.IsHome &&
-        //                 f.FixtureType == df.FixtureType
-        //                 );
-
-        //             //Found download so check whether it matches
-        //             if (downloaded != null)
-        //             {
-        //                 recRow.RecStatus = FixtureRecMatchType.fullTimematched;
-        //                 //Need to remove downloaded from list!
-        //                 downloadFixtures.Remove(downloaded);   
-        //             }
-        //             //No match so just set whether there should be a full time match or not if team not set up 
-        //             else
-        //             {
-        //                 recRow.RecStatus = this.IsOnFullTime ? FixtureRecMatchType.localFixtureUnmatched : FixtureRecMatchType.localFixtureOnly;
-        //             }
-        //             return recRow;
-        //          }).ToList();
-
-        //     //Now need to find any downloaded fixtures that dont have a matching local fixture - any matching should already have been removed above
-        //     IList<TeamReconiliationRow> downloadRecs = downloadFixtures
-        //         .Select(df =>
-        //         {
-        //             return new TeamReconiliationRow
-        //             {
-        //                 Id = df.Id,
-        //                 Team = this,
-        //                 MatchDate = DateOnly.FromDateTime(df.Date),
-        //                 Opponent = df.Opponent,
-        //                 Venue = (df.IsHome ? "H" : "A"),
-        //                 RecStatus = FixtureRecMatchType.fullTimeUnmatched,
-        //                 FixtureType = df.FixtureType
-
-        //             };
-        //         }).ToList();
-
-        //     return recRows.Concat(downloadRecs).ToList();
-
-        // }
-
         [Display(Name = "Team Name")]
         public string DisplayName
         {
@@ -196,28 +110,6 @@ namespace FixtureManagementBlazor.Models
                 }
            }
         }
-
-        //public string Colour
-        //{
-        //    get
-        //    {
-        //        return League switch
-        //        {
-        //            League.BucksGirls => "Crimson",
-        //            League.HighWycSunComb => "DimGray",
-        //            League.OxGirls => "Teal",
-        //            League.OxMailYouth => "Gold",
-        //            League.OxOver50 => "Silver",
-        //            League.SouthBucksMini => "OrangeRed",
-        //            League.TVCWFL => "MediumSeaGreen",
-        //            League.WycAndSouthBucksMinor => "SteelBlue",
-        //            League.JPL => "MidnightBlue",
-        //            League.UHL => "DimGray",
-        //            League.ADL => "DimGray",
-        //            _ => "SteelBlue"
-        //        };
-        //    }
-        //}
 
         public (int R, int G, int B) ColourRGB
         {
@@ -282,6 +174,8 @@ namespace FixtureManagementBlazor.Models
         //Navigation
         // public List<Fixture> Fixtures { get; set; } = [];
         public List<TeamContact> Contacts { get; set; } = [];
+
+
      }
 
 
@@ -340,5 +234,8 @@ namespace FixtureManagementBlazor.Models
     {
         One=1, Two=2, Three=3, Four=4, Five=5, Six=6, Seven=7, Eight =8, Nine=9, Ten=10, Red=20, White=21, Blue=22, Black=23, Green=24, Yellow=25, West = 70, South = 71, North = 72, East = 73, Championship = 80, Premier = 81, Other =100
     }
+
+
    
 }
+

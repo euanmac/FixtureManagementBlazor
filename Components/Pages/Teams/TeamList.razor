@@ -1,0 +1,112 @@
+@page "/teams"
+@attribute [StreamRendering]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ApplicationDbContext MyDbContext
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@using FixtureManagementBlazor.Models
+@using FixtureManagementBlazor.ViewModels
+@using MudBlazor
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Teams</PageTitle>
+
+@if (teamsFiltered == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{    
+    <MudStack Row="true" class="pa-4" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+
+        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="false" hidden="@(!isAuthenticated)" Size="Size.Small" Class="" Href="/fixture/create" Color="Color.Primary"/>
+        <MudFab StartIcon="@Icons.Material.Filled.Download" DropShadow="false" Size="Size.Small" Color="Color.Primary"/>
+        
+    </MudStack>         
+    <MudDataGrid    T="Team" 
+                    ReadOnly="false" 
+                    Items="@teamsFiltered" 
+                    Dense="true" Filterable="true" 
+                    Striped="true" EditMode="DataGridEditMode.Form"
+                    Virtualize="true" FixedHeader="true" Height="700px"
+                    QuickFilter="@_quickFilter"
+                    RowClass="pt-0 pb-0"> 
+         <Columns >
+            <PropertyColumn Property="@(t => t.DisplayName)" Title="Team Name" Sortable="true" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <PropertyColumn Property="@(t => Utilities.GetAttributeOfType<DisplayAttribute>(t.League)!.Name ?? "")" Title="League" Sortable="true" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <PropertyColumn Property="@(t => t.Division)" Title="Division" Sortable="true" HeaderStyle="max-width:10px"  CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+            <PropertyColumn Property="@(t => Utilities.GetAttributeOfType<DisplayAttribute>(t.TeamSize)!.Name ?? "")" Title="Format" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0" Sortable="false"/>
+            <TemplateColumn HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" CellClass="pt-0 pb-0 pa-0">
+                <HeaderTemplate>Contacts</HeaderTemplate>
+                <CellTemplate>
+                    @foreach (var contact in context.Item.Contacts.OrderBy(c => c.ContactType))
+                    {
+                        @contact.Person.FirstName @:  @contact.Person.LastName <br />
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Hidden="@(!isAuthenticated)" CellClass="pt-0 pb-0 pa-0" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride"> 
+                <CellTemplate>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Href="@($"/fixture/edit/{context.Item.Id}")" class="pa-0"/>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Href="@($"/fixture/delete/{context.Item.Id}")" class="pa-0"/>
+                </CellTemplate>
+            </TemplateColumn> 
+        </Columns>
+    </MudDataGrid>
+
+}
+
+@code {
+
+    private string rowStyleOverride = "font-size: .8rem; font-weight: 500; overflow-x: hidden; white-space: nowrap;"; //max-width:10px; 
+
+    private IQueryable<Team> teams = Enumerable.Empty<Team>().AsQueryable(); 
+    private DateTime? startDate = DateTime.Now.Date;
+    private DateTime? endDate = DateTime.Now.AddDays(14);
+    private bool isAuthenticated = false;
+
+    private string _searchString = "";
+    IQueryable<Team> teamsFiltered
+    {
+        get
+        {
+            var result = teams;
+                @* .Where *@
+            return result;
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        // Simulate asynchronous loading to demonstrate streaming rendering
+        using var context = DbFactory.CreateDbContext();
+        
+        //Check whether authenticated
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = (user.Identity is not null && user.Identity.IsAuthenticated);
+
+        teams = (await context.Team
+                .Include(t => t.Contacts)
+                    .ThenInclude(c => c.Person)
+                .OrderBy(t => t.AgeGroup)
+                    .ThenBy(t => t.Gender)
+                    .ThenBy(t => t.Division)
+                .ToListAsync())
+                .AsQueryable();
+    }
+
+
+    private Func<Team, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Name.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    };
+
+
+}
