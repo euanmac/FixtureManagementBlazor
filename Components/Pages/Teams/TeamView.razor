@@ -1,0 +1,248 @@
+﻿@page "/team/{Action}/{TeamId:guid}"
+@page "/team/{Action}"
+
+@inject IDbContextFactory<FixtureManagementBlazor.Data.ApplicationDbContext> DbFactory
+@inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
+
+@using FixtureManagementBlazor.Models
+@using Microsoft.AspNetCore.Authorization
+@using MudBlazor
+@using System.ComponentModel.DataAnnotations
+@using FixtureManagementBlazor.ViewModels
+
+@attribute [Authorize]
+
+<MudText Class="mb-4 mt-4" Typo="Typo.h5">@Team!.DisplayName</MudText>
+
+<EditForm method="post" Model="Team" OnValidSubmit="UpdateFixture" FormName="create" Enhance>
+    <DataAnnotationsValidator />
+    <MudCard Style="max-width:1000" Elevation="0">
+        <MudCardContent>      
+            
+                @if (action != ComponentAction.Edit) {
+                    <MudStack Justify="Justify.FlexStart" AlignItems="AlignItems.Stretch" Spacing="2" Row="false" Wrap="Wrap.Wrap">
+                        <MudField Label="Name" Underline="false">@Team!.Name</MudField> 
+                        <MudField Label="Age Group" Underline="false">@Team!.AgeGroup</MudField> 
+                        <MudField Label="League" Underline="false">@(Utilities.GetAttributeOfType<DisplayAttribute>(Team!.League)!.Name ?? "")</MudField> 
+                        <MudField Label="Division" Underline="false">@Team!.Division</MudField> 
+                    </MudStack>
+                    
+                
+                } else {
+                    <MudStack Justify="Justify.FlexStart" AlignItems="AlignItems.Stretch" Spacing="2" Row="false" Wrap="Wrap.Wrap">
+
+                        <MudTextField @bind-Value="Team!.Name" For="() => Team!.Name" Label="Name" Immediate="true"/> 
+                        <MudSelect @bind-Value="Team.AgeGroup" Label="Age Group">
+                            @foreach (AgeGroup ag in Enum.GetValues(typeof(AgeGroup)))
+                            {
+                                <MudSelectItem Value="@ag">@ag</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudSelect @bind-Value="Team.League" Label="League">
+                                @foreach (League league in Enum.GetValues(typeof(League)))
+                                {
+                                    <MudSelectItem Value="@league">@(Utilities.GetAttributeOfType<DisplayAttribute>(league)!.Name ?? "")</MudSelectItem>
+                                }
+                        </MudSelect>
+                        <MudSelect @bind-Value="Team.Division" Label="Division">
+                                @foreach (Division div in Enum.GetValues(typeof(Division)))
+                                {
+                                    <MudSelectItem Value="@div">@div</MudSelectItem>
+                                }
+                        </MudSelect>   
+                    </MudStack>
+                    <MudStack  Justify="Justify.FlexStart" AlignItems="AlignItems.Stretch" Spacing="5" Row="true" Wrap="Wrap.Wrap" Class="mt-2">                 
+                        <MudTextField @bind-Value="Team!.FullTimeLeagueId" For="() => Team!.FullTimeLeagueId" Label="Full Time League Id" Immediate="true"/>                     
+                        <MudTextField @bind-Value="Team!.FullTimeTeamId" For="() => Team!.FullTimeTeamId" Label="Full Time Team Id" Immediate="true"/> 
+                    </MudStack>
+                }
+                
+               @* <MudSelect @bind-Value="Fixture.FixtureType" Label="Fixture Type">
+                        @foreach (FixtureType ftype in Enum.GetValues(typeof(FixtureType)))
+                        {
+                            <MudSelectItem Value="@ftype">@ftype</MudSelectItem>
+                        }
+                </MudSelect> *@
+
+        </MudCardContent>
+    </MudCard>
+    <MudPaper Style="max-width:1000" Elevation="0" Class="mt-2 mb-2 flex-auto">
+        <FixtureGrid CanEdit="@isAuthenticated" Fixtures="@fixtures" TeamHidden="true"/>
+    </MudPaper>
+
+    @if (action == ComponentAction.Delete) {
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Error" Class="mt-4 mr-2">Delete</MudButton>
+    } else if (action == ComponentAction.Edit) {
+
+        <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Default" Class="mt-4 mr-2" OnClick="() => action = ComponentAction.Read">Cancel</MudButton>
+        <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-4 mr-2">Save</MudButton>
+    } else {
+        <MudButton Href="/teams" Variant="Variant.Filled" Color="Color.Default" Class="mt-4 mr-2">Back</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Default" Class="mt-4 mr-2" OnClick="()=> action = ComponentAction.Edit">Edit</MudButton>
+    }
+  
+</EditForm>
+
+
+@code {
+
+    private bool editTeam = true;
+    [SupplyParameterFromForm]
+    public Team? Team { get; set; } 
+
+    [Parameter]
+    public Guid? TeamId {get; set;}  
+
+    private ComponentAction? action;
+
+    [Parameter]
+    public string? Action { get; set; }
+
+    private IQueryable<Team> teamList = Enumerable.Empty<Team>().AsQueryable();
+
+    private IQueryable<FixtureViewModel> fixtures = Enumerable.Empty<FixtureViewModel>().AsQueryable(); 
+
+    private bool isAuthenticated = false;
+
+    public override async Task SetParametersAsync(ParameterView parameters)
+    {
+        if (parameters.TryGetValue<string>(nameof(Action), out var value)) 
+        {
+            ComponentAction tAction;
+            if (Enum.TryParse(value, true, out tAction)) 
+            {
+                 action = tAction;                 
+            } 
+            else 
+            {
+                action = null;
+            }
+        }
+        await base.SetParametersAsync(parameters);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+  
+    //Ensure correct URL parameter combination provided
+        if (action == null) {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+        if (action != ComponentAction.Create && TeamId == Guid.Empty) {
+            NavigationManager.NavigateTo("notfound");
+        }
+
+        using var context = DbFactory.CreateDbContext();
+
+        //Check whether authenticated
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = (user.Identity is not null && user.Identity.IsAuthenticated);
+
+        //Create new fixture for create actions otherwise find
+        if (action == ComponentAction.Create) 
+        {
+            Team = new Team();
+        } 
+        else 
+        {
+            Team = await context.Team
+                 .Include(t => t.Contacts)
+                    .ThenInclude(c => c.Person)
+                .FirstAsync(m => m.Id == TeamId);
+        }
+
+        fixtures = (await context.Fixture
+                .Include(f => f.Team)
+                .Include(f => f.FixtureAllocation)
+                    .ThenInclude(fa => fa!.Pitch)
+                .Where(f => (f.TeamId == TeamId))
+                .OrderBy(f => f.Date)
+                    .ThenBy(f => f.Team!.AgeGroup)
+                .ToListAsync())
+                .Select(f => new FixtureViewModel(f, isAuthenticated))
+                .AsQueryable();
+    }
+
+    // To protect from overposting attacks, see https://aka.ms/RazorPagesCRUD
+    public async Task UpdateFixture()
+    {   
+        switch (action) 
+        {
+            case ComponentAction.Create:
+                await AddTeam();
+                break;
+            case ComponentAction.Edit:
+                await EditTeam();
+                break;
+            case ComponentAction.Delete:
+                await DeleteTeam();
+                break;
+        }
+        action = ComponentAction.Read;
+    }
+
+    private async Task AddTeam() {
+        using var context = DbFactory.CreateDbContext();
+        context.Team.Add(Team!);
+        await context.SaveChangesAsync();
+    }
+
+    private async Task EditTeam() {
+        using var context = DbFactory.CreateDbContext();
+        //Remove reference link otherwise it doesnt save properly
+        @* Team!.Team = null; *@
+        context.Update(Team!);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!TeamExists(Team!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private async Task DeleteTeam() {
+
+        using var context = DbFactory.CreateDbContext();
+        //Remove reference link as it may try and delete team as well
+        //Fixture!.Team = null;
+        context.Remove(Team!);
+        try
+        {
+            await context.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!TeamExists(Team!.Id))
+            {
+                NavigationManager.NavigateTo("notfound");
+            }
+            else
+            {
+                throw;
+            }
+        }
+    }
+
+    private bool TeamExists(Guid id)
+    {
+        using var context = DbFactory.CreateDbContext();
+        return context.Team.Any(e => e.Id == id);
+    }
+
+    enum ComponentAction {
+        Create, Read, Edit, Delete
+    }
+
+}

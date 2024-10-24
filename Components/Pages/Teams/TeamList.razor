@@ -30,11 +30,16 @@ else
                     Virtualize="true" FixedHeader="true" Height="700px"
                     QuickFilter="@_quickFilter"
                     RowClass="pt-0 pb-0"> 
-         <Columns >
-            <PropertyColumn Property="@(t => t.DisplayName)" Title="Team Name" Sortable="true" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
-            <PropertyColumn Property="@(t => Utilities.GetAttributeOfType<DisplayAttribute>(t.League)!.Name ?? "")" Title="League" Sortable="true" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
-            <PropertyColumn Property="@(t => t.Division)" Title="Division" Sortable="true" HeaderStyle="max-width:10px"  CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
-            <PropertyColumn Property="@(t => Utilities.GetAttributeOfType<DisplayAttribute>(t.TeamSize)!.Name ?? "")" Title="Format" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0" Sortable="false"/>
+         <Columns>
+            <TemplateColumn  CellStyle="@rowStyleOverride" CellClass="pa-0 ma-0" Sortable="true">
+                <HeaderTemplate>Team</HeaderTemplate>
+                <CellTemplate>
+                    <MudLink Style="@rowStyleOverride" Href="@($"/team/read/{context.Item.Id}")" Color="Color.Secondary">@(context.Item.DisplayName)</MudLink>
+                </CellTemplate>
+            </TemplateColumn> 
+            <PropertyColumn Property="@(t => Utilities.GetAttributeOfType<DisplayAttribute>(t.League)!.Name ?? "")" Title="League" Sortable="false" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pa-0"/>
+            <PropertyColumn Property="@(t => t.Division)" Title="Division" Sortable="false" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pa-0 ma-0"/>
+            <PropertyColumn Property="@(t => Utilities.GetAttributeOfType<DisplayAttribute>(t.TeamSize)!.Name ?? "")" Title="Format" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0" Sortable="false"/>
             <TemplateColumn HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride" CellClass="pt-0 pb-0 pa-0">
                 <HeaderTemplate>Contacts</HeaderTemplate>
                 <CellTemplate>
@@ -44,10 +49,10 @@ else
                     }
                 </CellTemplate>
             </TemplateColumn>
-            <TemplateColumn Hidden="@(!isAuthenticated)" CellClass="pt-0 pb-0 pa-0" HeaderStyle="max-width:10px" CellStyle="@rowStyleOverride"> 
+            <TemplateColumn Hidden="@(!isAuthenticated)" CellClass="pt-0 pb-0 pa-0" CellStyle="@rowStyleOverride"> 
                 <CellTemplate>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Href="@($"/fixture/edit/{context.Item.Id}")" class="pa-0"/>
-                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Href="@($"/fixture/delete/{context.Item.Id}")" class="pa-0"/>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Href="@($"/team/edit/{context.Item.Id}")" class="pa-0"/>
+                    <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Href="@($"/team/delete/{context.Item.Id}")" class="pa-0"/>
                 </CellTemplate>
             </TemplateColumn> 
         </Columns>

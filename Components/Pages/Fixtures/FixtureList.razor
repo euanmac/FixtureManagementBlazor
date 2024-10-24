@@ -9,51 +9,80 @@
 
 <PageTitle>Fixtures</PageTitle>
 
-@if (Fixtures == null)
+@if (fixturesFiltered == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
-    @* <table class="table">
-        <thead>
-            <tr>
-                <th>Date</th>
-                <th>Team</th>
-                <th>Opponent</th>
-                <th>Home</th>
-            </tr>
-        </thead>
-        <tbody> 
-            @foreach (var fixture in Fixture)
-            {
-                <tr>
-                    <td>@fixture.Date.ToShortDateString()</td>
-                    <td>@fixture.Team!.Name</td>
-                    <td>@fixture.Opponent</td>
-                    <td>@fixture.IsHome</td>
-                </tr>
-            }
-        </tbody>
-    </table> *@
     
-    <MudStack Row="true" class="pa-4" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
-        <MudChipSet T="string" SelectionMode="SelectionMode.MultiSelection" CheckMark="true" Variant="Variant.Text">
-                <MudChip Value="@("Home")" @bind-Selected="filterIncludeHome" Color="Color.Dark"/>
-                <MudChip Value="@("Away")" @bind-Selected="filterIncludeAway" Color="Color.Primary"/>
-        </MudChipSet>
+    @* <MudStack Row="true" class="pa-4" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap"> *@
+    <MudGrid>
+        <MudItem xs="2">
+            
         @* <MudTextField Format="yyyy-MM-dd" T="DateTime?" Label="Start Date"  InputType="InputType.Date" @bind-Value="startDate" Variant="Variant.Outlined" Margin="Margin.Dense" style="@filterStyleOverride" />
         <MudTextField Format="yyyy-MM-dd" T="DateTime?" Label="End Date"  InputType="InputType.Date" @bind-Value="endDate" Variant="Variant.Outlined" Margin="Margin.Dense" style="@filterStyleOverride" /> *@
-        <MudDatePicker Label="Start Date" @bind-Date="startDate" style="@filterStyleOverride" Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense"/>
-        <MudDatePicker Label="End Date" @bind-Date="endDate" style="@filterStyleOverride"  Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense"/>
-        <MudTextField @bind-Value="searchString" Label="Search" Adornment="Adornment.Start" Variant="Variant.Outlined" Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Margin="Margin.Dense" Clearable="true"></MudTextField> 
-        <MudSpacer/>
-        
-        <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="false" hidden="@(!isAuthenticated)" Size="Size.Small" Class="" Href="/fixture/create" Color="Color.Primary"/>
-        <MudFab StartIcon="@Icons.Material.Filled.Download" DropShadow="false" Size="Size.Small" Color="Color.Dark"/>
-        
-    </MudStack>         
-    <FixtureGrid CanEdit="@isAuthenticated" Fixtures="@Fixtures" SearchString="@searchString"></FixtureGrid>
+
+            @* <MudStack Row='true' Justify="Justify.FlexStart" Wrap="Wrap.Wrap"> *@
+                <MudChipSet T="string" SelectionMode="SelectionMode.MultiSelection" CheckMark="true" Variant="Variant.Text">
+                    <MudChip Value="@("Home")" @bind-Selected="filterIncludeHome" Color="Color.Dark"/>
+                    <MudChip Value="@("Away")" @bind-Selected="filterIncludeAway" Color="Color.Primary"/>
+                </MudChipSet>
+        </MudItem>
+        <MudItem xs="4">
+                <MudGrid>
+                    <MudItem xs="3">
+                        <MudDatePicker Label="Start Date" @bind-Date="startDate" style="@filterStyleOverride" Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense" St/>
+                    </MudItem>
+                    <MudItem xs="3">
+                        <MudDatePicker Label="End Date" @bind-Date="endDate" style="@filterStyleOverride"  Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudTextField @bind-Value="searchString" Label="Search" Adornment="Adornment.Start" Variant="Variant.Outlined" Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Margin="Margin.Dense" Clearable="true"></MudTextField> 
+                    </MudItem>
+                </MudGrid>        
+                @* <MudStack Row="true">
+                        <MudDatePicker Label="Start Date" @bind-Date="startDate" style="@filterStyleOverride" Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense" St/>
+                        <MudDatePicker Label="End Date" @bind-Date="endDate" style="@filterStyleOverride"  Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense"/>
+                        <MudTextField @bind-Value="searchString" Label="Search" Adornment="Adornment.Start" Variant="Variant.Outlined" Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Margin="Margin.Dense" Clearable="true"></MudTextField> 
+                </MudStack> *@
+            @* </MudStack> *@
+        </MudItem>
+        <MudItem xs="4">
+            <MudStack Row="true" Justify="Justify.FlexEnd">
+                <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="false" hidden="@(!isAuthenticated)" Size="Size.Small" Class="" Href="/fixture/create" Color="Color.Primary"/>
+                <MudFab StartIcon="@Icons.Material.Filled.Download" DropShadow="false" Size="Size.Small" Color="Color.Dark"/>
+            </MudStack>
+        </MudItem>
+    </MudGrid>    
+    <MudStack Row="true">
+        <MudStack Row="true" AlignItems="AlignItems.Center">
+            <MudChipSet T="string" SelectionMode="SelectionMode.MultiSelection" CheckMark="true" Variant="Variant.Text">
+                <MudChip Value="@("Home")" @bind-Selected="filterIncludeHome" Color="Color.Dark"/>
+                <MudChip Value="@("Away")" @bind-Selected="filterIncludeAway" Color="Color.Primary"/>
+            </MudChipSet>
+        </MudStack>        
+        <MudStack Row="true">
+                <MudGrid>
+                    <MudItem xs="3">
+                        <MudDatePicker Label="Start Date" @bind-Date="startDate" style="@filterStyleOverride" Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense" St/>
+                    </MudItem>
+                    <MudItem xs="3">
+                        <MudDatePicker Label="End Date" @bind-Date="endDate" style="@filterStyleOverride"  Variant="Variant.Outlined" InnerPadding="false" IconSize="Size.Small" Margin="Margin.Dense"/>
+                    </MudItem>
+                    <MudItem xs="6">
+                        <MudTextField @bind-Value="searchString" Label="Search" Adornment="Adornment.Start" Variant="Variant.Outlined" Immediate="true" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Margin="Margin.Dense" Clearable="true"></MudTextField> 
+                    </MudItem>
+                </MudGrid>  
+        </MudStack>
+        @* <MudSpacer/> *@
+        <MudStack Row="true" Justify="Justify.FlexEnd" AlignItems="AlignItems.Center" Wrap="Wrap.Wrap">
+            <MudFab StartIcon="@Icons.Material.Filled.Add" DropShadow="false" hidden="@(!isAuthenticated)" Size="Size.Small" Class="" Href="/fixture/create" Color="Color.Primary"/>
+            <MudFab StartIcon="@Icons.Material.Filled.Download" DropShadow="false" Size="Size.Small" Color="Color.Dark"/>
+        </MudStack>
+    </MudStack>
+    @* </MudStack>          *@
+    <FixtureGrid CanEdit="@isAuthenticated" Fixtures="@fixturesFiltered" SearchString="@searchString" TeamHidden="false"></FixtureGrid>
 }
 
 @code {
@@ -69,7 +98,7 @@ else
     private bool isAuthenticated = false;
 
     private string searchString = "";
-    IQueryable<FixtureViewModel> Fixtures
+    IQueryable<FixtureViewModel> fixturesFiltered
     {
         get
         {
@@ -86,7 +115,6 @@ else
         // Simulate asynchronous loading to demonstrate streaming rendering
         using var context = DbFactory.CreateDbContext();
         
-
         //Check whether authenticated
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
@@ -101,8 +129,6 @@ else
                 .ToListAsync())
                 .Select(f => new FixtureViewModel(f, isAuthenticated))
                 .AsQueryable();
-
-
     }
 
     Converter<DateOnly> converter = new Converter<DateOnly>
@@ -125,5 +151,26 @@ else
         return false;
     };
 
-
 }
+
+    @* <table class="table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Team</th>
+                <th>Opponent</th>
+                <th>Home</th>
+            </tr>
+        </thead>
+        <tbody> 
+            @foreach (var fixture in Fixture)
+            {
+                <tr>
+                    <td>@fixture.Date.ToShortDateString()</td>
+                    <td>@fixture.Team!.Name</td>
+                    <td>@fixture.Opponent</td>
+                    <td>@fixture.IsHome</td>
+                </tr>
+            }
+        </tbody>
+    </table> *@

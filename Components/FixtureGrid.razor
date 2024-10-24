@@ -1,4 +1,3 @@
-
 @using FixtureManagementBlazor.ViewModels
 @using FixtureManagementBlazor.Models
 @using MudBlazor
@@ -8,25 +7,37 @@
                 Items="@Fixtures" 
                 Dense="true" Filterable="true" 
                 Striped="true"
-                Virtualize="true" FixedHeader="true" Height="700px"
+                Virtualize="true" FixedHeader="true" 
                 QuickFilter="@quickFilter"
-                RowClass="pt-0 pb-0"> 
+                Breakpoint="Breakpoint.None"
+                RowClass="pa-0 ma-0"
+                HeaderClass="pa-0 ma-0"
+                Elevation="0"> 
         <Columns >
-        <PropertyColumn Property="@(f => f.Date)" Sortable="true" Format="dd/MM/yyyy" CellStyle="@rowStyleOverride" Filterable="false" Editable="false" CellClass="pt-0 pb-0 pr-0"/>
-        <PropertyColumn Property="@(f => f.Team)" Title="Team" Sortable="true" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0">
-
-        </PropertyColumn>
-        <PropertyColumn Property="@(f => (f.IsHome ? "H" : "A"))" Title="H/A" Sortable="false" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
-        <PropertyColumn Property="@(f => f.Opponent)" Title="Opponent" Sortable="true"  CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
-        <PropertyColumn Property="@(f => f.Type)" Title="Type" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0" Sortable="false"/>
-        <PropertyColumn Property="@(f => f.Pitch)" Sortable="false" Title="Pitch" CellStyle="@rowStyleOverride" Filterable="false" Editable="true" CellClass="pt-0 pb-0"/>
-        <PropertyColumn Property="@(f => f.Start)" Sortable="false" Title="Start" CellStyle="@rowStyleOverride" Editable="true" Filterable="false" CellClass="pt-0 pb-0"/>
-        <PropertyColumn Property="@(f => f.End)" Sortable="false" Title="End" CellStyle="@rowStyleOverride" Editable="true" Filterable="false" CellClass="pt-0 pb-0"/>
-        <TemplateColumn Hidden="@(CanEdit)" CellClass="pt-0 pb-0 pa-0"> 
+        <PropertyColumn Property="@(f => f.Date)" Sortable="false" Format="dd/MM/yyyy" CellStyle="@rowStyleOverride" Filterable="false" HeaderClass="@headerClassOverride" CellClass="pa-0 ma-0"/>
+        @* <PropertyColumn Property="@(f => f.Team)" Title="Team 2" Sortable="true" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/> *@
+        <TemplateColumn  CellStyle="@rowStyleOverride" HeaderClass="@headerClassOverride" CellClass="pa-0 ma-0" Sortable="true" Hidden="@TeamHidden">
+            <HeaderTemplate>Team</HeaderTemplate>
             <CellTemplate>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Edit" Href="@($"/fixture/edit/{context.Item.Id}")" class="pa-0"/>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Delete" Href="@($"/fixture/delete/{context.Item.Id}")" class="pa-0"/>
-                <MudIconButton Size="@Size.Small" Icon="@Icons.Material.Outlined.Schedule" Href="@($"/fixtureallocation/{context.Item.Id}")" class="pa-0"/>
+                <MudLink Style="@rowStyleOverride" Href="@($"/team/read/{context.Item.TeamId}")" Color="Color.Secondary">@(context.Item.Team)</MudLink>
+            </CellTemplate>
+        </TemplateColumn> 
+        <TemplateColumn  CellStyle="@rowStyleOverride" HeaderClass="@headerClassOverride" CellClass="pt-0 pb-0">
+            <HeaderTemplate>Home</HeaderTemplate>
+            <CellTemplate>
+                <MudCheckBox Disabled="true" Value="@context.Item.IsHome" Size="Size.Small"/>
+            </CellTemplate>
+        </TemplateColumn> 
+        <PropertyColumn Property="@(f => f.Opponent)" Title="Opponent" Sortable="false" HeaderClass="@headerClassOverride" CellStyle="@rowStyleOverride" Filterable="false" CellClass="pt-0 pb-0"/>
+        <PropertyColumn Property="@(f => f.Type)" Title="Type" CellStyle="@rowStyleOverride" Filterable="false" HeaderClass="@headerClassOverride" CellClass="pt-0 pb-0" Sortable="false"/>
+        <PropertyColumn Property="@(f => f.Pitch)" Sortable="false" Title="Pitch" HeaderClass="@headerClassOverride" CellStyle="@rowStyleOverride" Filterable="false" Editable="true" CellClass="pt-0 pb-0"/>
+        <PropertyColumn Property="@(f => f.Start)" Sortable="false" Title="Start" HeaderClass="@headerClassOverride" CellStyle="@rowStyleOverride" Editable="true" Filterable="false" CellClass="pt-0 pb-0"/>
+        <PropertyColumn Property="@(f => f.End)" Sortable="false" Title="End" HeaderClass="@headerClassOverride" CellStyle="@rowStyleOverride" Editable="true" Filterable="false" CellClass="pt-0 pb-0"/>
+        <TemplateColumn Hidden="@(!CanEdit)" HeaderClass="@headerClassOverride" CellClass="pt-0 pb-0"> 
+            <CellTemplate>
+                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.Edit" Href="@($"/fixture/edit/{context.Item.Id}")" Color="Color.Secondary" class="pa-0" Variant="Variant.Text"/>
+                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.Delete" Href="@($"/fixture/delete/{context.Item.Id}")" Color="Color.Secondary" class="pa-0" Variant="Variant.Text"/>
+                <MudIconButton Size="Size.Small" Icon="@Icons.Material.Outlined.Schedule" Href="@($"/fixtureallocation/{context.Item.Id}")" Color="Color.Secondary" class="pa-0" Variant="Variant.Text"/>
             </CellTemplate>
         </TemplateColumn> 
     </Columns>
@@ -40,8 +51,15 @@
     public bool CanEdit {get; set;}
     [Parameter]
     public String SearchString {get; set;} = "";
+    [Parameter]
+    public int MaxWidth {get; set;} 
+    [Parameter]
+    public bool TeamHidden {get; set;}= true;
 
     private string rowStyleOverride = "font-size: .8rem; font-weight: 500";
+
+    private string headerClassOverride = "pa-2 ma-2";
+
 
     private Func<FixtureViewModel, bool> quickFilter => x =>
     {
